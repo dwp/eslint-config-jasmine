@@ -1,0 +1,26 @@
+{
+    "name": "@dwp/eslint-config-jasmine",
+    "version": "1.0.0",
+    "author": "Adam Moss",
+    "license": "ISC",
+    "description": "jasmine configuration for eslint",
+    "keywords": [
+        "config",
+        "shareable-config",
+        "eslint",
+        "lint",
+        "jasmine"
+    ],
+    "homepage": "https://github.com/dwp/eslint-config-jasmine",
+    "repository": {
+        "type": "git",
+        "url": "git+ssh://git@github.com:dwp/eslint-config-jasmine.git"
+    },
+    "bugs": {
+        "url": "https://github.com/dwp/eslint-config-jasmine/issues"
+    },
+    "main": "",
+    "scripts": {},
+    "dependencies": {},
+    "devDependencies": {}
+}
