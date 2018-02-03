@@ -1,0 +1,11 @@
+{
+    "plugins": [ "eslint-plugin-jasmine" ],
+    "extends": [ "plugin:eslint-plugin-jasmine/recommended" ],
+    "env": {
+        "jasmine": true
+    },
+    "rules": {
+        "jasmine/no-suite-dupes": [ 2, "branch" ],
+        "jasmine/no-spec-dupes": [ 2, "branch" ]
+    }
+}
