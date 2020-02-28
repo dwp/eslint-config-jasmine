@@ -1,144 +1,142 @@
-.executor-shell: &executor-shell
-    tags:
-        - shell
+.executor-docker: &executor-docker
+  tags:
+    - docker
 
-.nvm-use: &nvm-use
-    before_script:
-        - nvm use
+.node-image: &node-image
+  image: node:12.16.1-alpine@sha256:08f387b98dd00c1a746580dbd91e538d534911cdd14f6d1d0b36b4687e823006
+
+.checkmarx-image: &checkmarx-image
+  image: $CI_REGISTRY/engineering-practice/checkmarx-cli:latest
+
+.checkmarx-script: &checkmarx-script
+  script:
+    - checkmarx ${CI_PROJECT_NAME}@${CI_PROJECT_NAMESPACE}#${CI_COMMIT_REF_NAME} Engineering
+
+.install-git: &install-git
+  before_script:
+    - apk update && apk upgrade && apk add --no-cache git
 
 .dependency-npm: &dependency-npm
-    dependencies:
-        - npm
+  dependencies:
+    - npm
 
 .dependency-unit: &dependency-unit
-    dependencies:
-        - npm
-        - unit
+  dependencies:
+    - npm
+    - unit
 
 .only-branches: &only-branches
-    except:
-        - master
-        - develop
-        - tags
-        - triggers
+  except:
+    - master
+    - tags
+    - triggers
 
 .not-branches: &not-branches
-    only:
-        - master
-        - develop
-        - tags
+  only:
+    - master
+    - tags
 
 stages:
-    - setup
-    - build
-    - compliance-tests
-    - security-tests
-    - unit-tests
-    - quality-tests
-
-nvm:
-    stage: setup
-    <<: *executor-shell
-    script:
-        - nvm install
+  - build
+  - compliance-tests
+  - security-tests
+  - unit-tests
+  - quality-tests
 
 npm:
-    stage: build
-    <<: *executor-shell
-    <<: *nvm-use
-    script:
-        - HASH=( $( md5sum package.json ) )
-        - CACHE=/tmp/${CI_PROJECT_NAME}_${HASH}.tgz
-        - if [ -f $CACHE ]; then
-              tar -xzf $CACHE;
-          else
-              rm -f /tmp/${CI_PROJECT_NAME}_*.tgz &&
-              npm install &&
-              tar -czf $CACHE node_modules;
-          fi
-    artifacts:
-        name: "${CI_PROJECT_NAME}_${CI_JOB_ID}_${CI_COMMIT_SHA}"
-        expire_in: 10 mins
-        paths:
-            - node_modules
+  stage: build
+  <<: *executor-docker
+  <<: *node-image
+  script:
+    - HASH="$( md5sum package.json )"
+    - CACHE=/tmp/${CI_PROJECT_NAME}_${HASH}.tgz
+    - if [ -f "$CACHE" ]; then
+        tar -xzf "$CACHE";
+      else
+        rm -f /tmp/${CI_PROJECT_NAME}_*.tgz &&
+        npm install &&
+        tar -czf "$CACHE" node_modules;
+      fi
+  artifacts:
+    name: "${CI_PROJECT_NAME}_${CI_JOB_ID}_${CI_COMMIT_SHA}"
+    expire_in: 30 mins
+    paths:
+      - node_modules
 
 commitlint-branch:
-    stage: compliance-tests
-    <<: *executor-shell
-    <<: *nvm-use
-    <<: *dependency-npm
-    script:
-        - git fetch origin develop --quiet
-        - git checkout develop --quiet
-        - git reset --hard origin/develop --quiet
-        - git checkout - --quiet
-        - npm run compliance:commitlint
-    <<: *only-branches
-
-commitlint-develop:
-    stage: compliance-tests
-    <<: *executor-shell
-    <<: *nvm-use
-    <<: *dependency-npm
-    script:
-        - git fetch origin master --quiet
-        - git checkout master --quiet
-        - git reset --hard origin/master --quiet
-        - git checkout - --quiet
-        - ./node_modules/.bin/commitlint --from=master --to=HEAD
-    <<: *not-branches
+  stage: compliance-tests
+  <<: *executor-docker
+  <<: *node-image
+  <<: *install-git
+  <<: *dependency-npm
+  script:
+    - git fetch origin master --quiet
+    - git checkout master --quiet
+    - git reset --hard origin/master --quiet
+    - git checkout - --quiet
+    - npm run compliance:commits
+  <<: *only-branches
 
 eslint:
-    stage: compliance-tests
-    <<: *executor-shell
-    <<: *nvm-use
-    <<: *dependency-npm
-    script:
-        - npm run compliance:eslint
+  stage: compliance-tests
+  <<: *executor-docker
+  <<: *node-image
+  <<: *dependency-npm
+  script:
+    - npm run compliance:lint
 
 outdated:
-    stage: security-tests
-    <<: *executor-shell
-    <<: *nvm-use
-    <<: *dependency-npm
-    script:
-        - npm outdated
-    allow_failure: true
+  stage: security-tests
+  <<: *executor-docker
+  <<: *node-image
+  <<: *dependency-npm
+  script:
+    - npm outdated
+  allow_failure: true
 
-nsp:
-    stage: security-tests
-    <<: *executor-shell
-    <<: *nvm-use
-    script:
-        - npm run security:nsp
+audit:
+  stage: security-tests
+  <<: *executor-docker
+  <<: *node-image
+  script:
+    - npm run security:audit
+
+checkmarx:
+  stage: security-tests
+  tags:
+    - transparent
+  <<: *checkmarx-image
+  <<: *checkmarx-script
+  <<: *not-branches
+
+checkmarx-branch:
+  stage: security-tests
+  <<: *executor-docker
+  <<: *checkmarx-image
+  <<: *checkmarx-script
+  <<: *only-branches
+  when: manual
 
 unit:
-    stage: unit-tests
-    <<: *executor-shell
-    <<: *nvm-use
-    <<: *dependency-npm
-    script:
-        - npm run unit:test
-    artifacts:
-        expire_in: 10 mins
-        paths:
-            - .coverage/unit/lcov.info
-    coverage: /^Lines\s*:\s(\d+(?:.\d+)?%)/
-
-sonarjs:
-    stage: quality-tests
-    <<: *executor-shell
-    <<: *nvm-use
-    <<: *dependency-npm
-    script:
-        - npm run quality:sonarjs
+  stage: unit-tests
+  <<: *executor-docker
+  <<: *node-image
+  <<: *dependency-npm
+  script:
+    - npm run tests:unit
+  artifacts:
+    expire_in: 30 mins
+    paths:
+      - .coverage/unit/lcov.info
+  coverage: /^Lines\s*:\s(\d+(?:.\d+)?%)/
 
 sonar-scanner:
-    stage: quality-tests
-    <<: *executor-shell
-    <<: *nvm-use
-    <<: *dependency-unit
-    script:
-        - sed -i.bak -e "s|^SF:\(.*/[[:digit:]]\{1,\}/.*/\)|SF:$( pwd )/|g" .coverage/unit/lcov.info
-        - npm run quality:sonar-scanner
-    <<: *not-branches
+  stage: quality-tests
+  tags:
+    - transparent
+  image: $CI_REGISTRY/engineering-practice/sonar-scanner:latest
+  <<: *dependency-unit
+  script:
+    - sed -i.bak -e "s|^SF:\(.*/[[:digit:]]\{1,\}/.*/\)|SF:$( pwd )/|g" .coverage/unit/lcov.info
+    - sonar-scanner -Dsonar.projectBaseDir=$CI_PROJECT_DIR
+  <<: *not-branches
