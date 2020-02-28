@@ -46,16 +46,15 @@
     "eslint-plugin-jasmine": "2.9.1"
   },
   "devDependencies": {
-    "@commitlint/cli": "6.0.2",
-    "@dwp/commitlint-config-base": "1.0.0",
+    "@commitlint/cli": "^8.3.5",
+    "@dwp/commitlint-config-base": "^1.1.0",
     "@dwp/eslint-config-base": "^4.1.0",
     "@dwp/nyc-config-base": "1.0.0",
     "eslint": "^6.8.0",
-    "husky": "0.14.3",
+    "husky": "^4.2.3",
     "jasmine": "2.8.0",
     "jasmine-spec-reporter": "4.2.1",
-    "lint-staged": "6.0.0",
-    "nsp": "3.1.0",
+    "lint-staged": "^10.0.8",
     "nyc": "11.4.1",
     "snyk": "1.68.0",
     "sonarjs": "1.0.0"
