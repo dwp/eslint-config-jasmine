@@ -13,7 +13,7 @@ npm install --save-dev @dwp/eslint-config-base eslint
 Add an `.eslintrc.js` file that looks something like:
 
 ```js
-module.exports = require( '@dwp/eslint-config-jasmine' );
+module.exports = require('@dwp/eslint-config-jasmine');
 ```
 
 You can add your own rules to enhance this, but in doing so please ensure you don't weaken the baseline ruleset.
@@ -25,5 +25,5 @@ Don't use `.eslintrc` (low precedence) or `package.json` (even lower, and just p
 Add `eslint` to your test suite like this, or see our [package.json](package.json) for an example of how we do it:
 
 ```json
-    "test": "eslint ."
+  "test": "eslint ."
 ```
