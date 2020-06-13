@@ -56,6 +56,6 @@
     "jasmine-spec-reporter": "4.2.1",
     "lint-staged": "10.2.10",
     "nyc": "15.1.0",
-    "snyk": "1.339.1"
+    "snyk": "1.339.2"
   }
 }
