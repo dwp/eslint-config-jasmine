@@ -43,7 +43,7 @@
     "tests:unit": "nyc --report-dir .coverage/unit jasmine JASMINE_CONFIG_PATH=tests/unit/support/jasmine.json"
   },
   "dependencies": {
-    "eslint-plugin-jasmine": "4.1.0"
+    "eslint-plugin-jasmine": "4.1.1"
   },
   "devDependencies": {
     "@commitlint/cli": "8.3.5",
